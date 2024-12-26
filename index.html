@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #282828;
+            color: #ebdbb2;
+            font-family: 'Consolas', 'Monaco', monospace;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .ide-header {
+            background-color: #1d2021;
+            padding: 10px;
+            border-bottom: 1px solid #3c3836;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .tab {
+            background-color: #282828;
+            padding: 8px 20px;
+            border-radius: 4px 4px 0 0;
+            display: inline-block;
+        }
+
+        .ide-content {
+            flex: 1;
+            display: flex;
+            overflow: auto;
+        }
+
+        .editor {
+            flex: 1;
+            display: flex;
+            min-width: min-content;
+        }
+
+        .line-numbers {
+            background-color: #3c3836;
+            padding: 10px;
+            text-align: right;
+            user-select: none;
+            color: #928374;
+            position: sticky;
+            left: 0;
+        }
+
+        .code-area {
+            padding: 10px 20px;
+            white-space: pre;
+            line-height: 1.5;
+            position: relative;
+            min-width: max-content;
+        }
+
+        .code-line {
+            position: relative;
+            z-index: 1;
+        }
+
+        .active-line {
+            position: absolute;
+            left: 0;
+            right: 0;
+            background-color: rgba(235, 219, 178, 0.1);
+            height: 1.5em;
+            z-index: 0;
+        }
+
+        .typing {
+            position: relative;
+            border-right: 2px solid #ebdbb2;
+            animation: blink 1s step-end infinite;
+        }
+
+        .terminal {
+            background-color: #1d2021;
+            border-top: 1px solid #3c3836;
+            padding: 15px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+            position: sticky;
+            bottom: 0;
+        }
+
+        .terminal.visible {
+            max-height: 300px;
+        }
+
+        .terminal-content {
+            color: #b8bb26;
+            opacity: 0;
+            transition: opacity 0.3s ease-out;
+            white-space: pre-line;
+        }
+
+        .terminal-content.visible {
+            opacity: 1;
+        }
+
+        @keyframes blink {
+            50% { border-color: transparent; }
+        }
+
+        .keyword { color: #fb4934; }
+        .string { color: #b8bb26; }
+        .comment { color: #928374; }
+        .function { color: #83a598; }
+        .type { color: #d3869b; }
+
+        .terminal-prompt {
+            color: #928374;
+        }
+
+        .terminal-output {
+            color: #ebdbb2;
+        }
+    </style>
+</head>
+<body>
+    <div class="ide-header">
+        <div class="tab">index.ts</div>
+    </div>
+    <div class="ide-content">
+        <div class="editor">
+            <div class="line-numbers" id="line-numbers"></div>
+            <div class="code-area">
+                <div class="active-line" id="active-line"></div>
+                <span class="typing" id="code"></span>
+            </div>
+        </div>
+    </div>
+    <div class="terminal" id="terminal">
+        <div class="terminal-content" id="terminal-output"><span class="terminal-prompt">../Projects/Bio $ node index.ts</span>
+>> Name: Ilya
+>> Nickname: uglyjpke/seventeen
+>> shitshitshit: I found Jesus, Christian Dior
+>> Age: 13
+>> whxami: Web Developer, UI/UX Designer
+>> Main Languags: TypeScript, Node.js, .NET
+>> Devices: Redmi 7 (onclite) 3/32
+>> мне никто бля не пишет: telegram @fvckkinawesome</div>
+    </div>
+
+    <script>
+        const codeText = `<span class="keyword">interface</span> <span class="type">UserInfo</span> {
+    name: <span class="type">string</span>;
+    nickname: <span class="type">string</span>;
+    shi: <span class="type">string</span>;
+    age: <span class="type">number</span>;
+    skills: <span class="type">string</span>;
+    lang: <span class="type">string</span>;
+    devices: <span class="type">string</span>;
+    contact: <span class="type">string</span>;
+}
+
+<span class="keyword">const</span> userInfo: <span class="type">UserInfo</span> = {
+    name: <span class="string">"Ilya"</span>,
+    nickname: <span class="string">"uglyjpke/seventeen"</span>,
+    shi: <span class="string">"I found Jesus, Christian Dior"</span>,
+    age: 13,
+    skills: <span class="string">"Web Developer, UI/UX Designer"</span>,
+    lang: <span class="string">"TypeScript, Node.js, .NET"</span>,
+    devices: <span class="string">"Redmi 7 (onclite) 3/32"</span>,
+    contact: <span class="string">"telegram @fvckkinawesome"</span>
+};
+
+console.log(<span class="string">\`Name: \${</span>userInfo.name<span class="string">}\`</span>);
+console.log(<span class="string">\`Nickname: \${</span>userInfo.nickname<span class="string">}\`</span>);
+console.log(<span class="string">\`shitshitshit: \${</span>userInfo.shi<span class="string">}\`</span>);
+console.log(<span class="string">\`Age: \${</span>userInfo.age<span class="string">}\`</span>);
+console.log(<span class="string">\`whxami: \${</span>userInfo.skills<span class="string">}\`</span>);
+console.log(<span class="string">\`Main Languags: \${</span>userInfo.lang<span class="string">}\`</span>);
+console.log(<span class="string">\`Devices: \${</span>userInfo.devices<span class="string">}\`</span>);
+console.log(<span class="string">\`мне никто бля не пишет: \${</span>userInfo.contact<span class="string">}\`</span>);`;
+
+        const codeElement = document.getElementById('code');
+        const lineNumbersElement = document.getElementById('line-numbers');
+        const activeLineElement = document.getElementById('active-line');
+        const terminalElement = document.getElementById('terminal');
+        const terminalOutput = document.getElementById('terminal-output');
+        
+        function updateLineNumbers() {
+            const lines = codeText.split('\n').length;
+            lineNumbersElement.innerHTML = Array.from({ length: lines }, (_, i) => i + 1).join('<br>');
+        }
+        
+        updateLineNumbers();
+        
+        let i = 0;
+        let currentLine = 0;
+        
+        function updateActiveLine() {
+            const textUpToCursor = codeText.slice(0, i);
+            currentLine = textUpToCursor.split('\n').length - 1;
+            activeLineElement.style.top = `${currentLine * 1.5}em`;
+        }
+        
+        function typeCode() {
+            if (i < codeText.length) {
+                codeElement.innerHTML = codeText.slice(0, i + 1);
+                updateActiveLine();
+                i++;
+                setTimeout(typeCode, 20);
+            } else {
+                setTimeout(() => {
+                    terminalElement.classList.add('visible');
+                    terminalOutput.classList.add('visible');
+                }, 500);
+            }
+        }
+
+        typeCode();
+    </script>
+</body>
+</html>
