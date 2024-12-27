@@ -1,79 +1,89 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>uglyjpke bio</title>
     <style>
-        body {
+        * {
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
+            font-family: monospace;
+        }
+
+        body {
             background-color: #282828;
             color: #ebdbb2;
-            font-family: 'Consolas', 'Monaco', monospace;
+            height: 100vh;
             display: flex;
             flex-direction: column;
         }
 
-        .ide-header {
+        .tab-bar {
             background-color: #1d2021;
-            padding: 10px;
+            padding: 12px;
             border-bottom: 1px solid #3c3836;
-            position: sticky;
-            top: 0;
-            z-index: 10;
         }
 
         .tab {
             background-color: #282828;
-            padding: 8px 20px;
-            border-radius: 4px 4px 0 0;
             display: inline-block;
-        }
-
-        .ide-content {
-            flex: 1;
-            display: flex;
-            overflow: auto;
+            padding: 8px 20px;
+            border-top-left-radius: 4px;
+            border-top-right-radius: 4px;
         }
 
         .editor {
             flex: 1;
             display: flex;
-            min-width: min-content;
+            overflow: auto;
+            position: relative;
         }
 
         .line-numbers {
             background-color: #3c3836;
-            padding: 10px;
+            padding: 12px;
             text-align: right;
             user-select: none;
-            color: #928374;
             position: sticky;
             left: 0;
+            z-index: 10;
+            color: #928374;
+        }
+
+        .line-number {
+            height: 24px;
         }
 
         .code-area {
-            padding: 10px 20px;
-            white-space: pre;
-            line-height: 1.5;
+            padding: 12px;
             position: relative;
+            overflow-x: auto;
+            width: 100%;
+        }
+
+        .code-content {
+            position: relative;
+            display: inline-block;
             min-width: max-content;
         }
 
-        .code-line {
-            position: relative;
-            z-index: 1;
-        }
-
-        .active-line {
+        .current-line {
+            background-color: #50494566;
             position: absolute;
-            left: 0;
-            right: 0;
-            background-color: rgba(235, 219, 178, 0.1);
-            height: 1.5em;
-            z-index: 0;
+            height: 24px;
+            width: 100%;
+            transition: all 150ms;
         }
 
-        .typing {
+        .code {
             position: relative;
+            white-space: pre;
+            line-height: 24px;
+        }
+
+        .cursor {
             border-right: 2px solid #ebdbb2;
             animation: blink 1s step-end infinite;
         }
@@ -81,142 +91,188 @@
         .terminal {
             background-color: #1d2021;
             border-top: 1px solid #3c3836;
-            padding: 15px;
-            font-family: 'Consolas', 'Monaco', monospace;
             max-height: 0;
             overflow: hidden;
-            transition: max-height 0.3s ease-out;
-            position: sticky;
-            bottom: 0;
+            transition: max-height 300ms;
         }
 
         .terminal.visible {
-            max-height: 300px;
+            max-height: 288px;
         }
 
         .terminal-content {
-            color: #b8bb26;
+            padding: 16px;
             opacity: 0;
-            transition: opacity 0.3s ease-out;
-            white-space: pre-line;
+            transition: opacity 300ms;
         }
 
-        .terminal-content.visible {
+        .terminal.visible .terminal-content {
             opacity: 1;
+        }
+
+        .terminal-path {
+            color: #928374;
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        .terminal-line {
+            color: #b8bb26;
+            opacity: 0;
+            transform: translateY(8px);
+            animation: fadeIn 0.3s ease-out forwards;
         }
 
         @keyframes blink {
             50% { border-color: transparent; }
         }
 
-        .keyword { color: #fb4934; }
-        .string { color: #b8bb26; }
-        .comment { color: #928374; }
-        .function { color: #83a598; }
-        .type { color: #d3869b; }
-
-        .terminal-prompt {
-            color: #928374;
-        }
-
-        .terminal-output {
-            color: #ebdbb2;
-        }
-    </style>
-</head>
-<body>
-    <div class="ide-header">
-        <div class="tab">index.ts</div>
-    </div>
-    <div class="ide-content">
-        <div class="editor">
-            <div class="line-numbers" id="line-numbers"></div>
-            <div class="code-area">
-                <div class="active-line" id="active-line"></div>
-                <span class="typing" id="code"></span>
-            </div>
-        </div>
-    </div>
-    <div class="terminal" id="terminal">
-        <div class="terminal-content" id="terminal-output"><span class="terminal-prompt">../Projects/Bio $ node index.ts</span>
->> Name: Ilya
->> Nickname: uglyjpke/seventeen
->> shitshitshit: I found Jesus, Christian Dior
->> Age: 13
->> whxami: Web Developer, UI/UX Designer
->> Main Languags: TypeScript, Node.js, .NET
->> Devices: Redmi 7 (onclite) 3/32
->> мне никто бля не пишет: telegram @fvckkinawesome</div>
-    </div>
-
-    <script>
-        const codeText = `<span class="keyword">interface</span> <span class="type">UserInfo</span> {
-    name: <span class="type">string</span>;
-    nickname: <span class="type">string</span>;
-    shi: <span class="type">string</span>;
-    age: <span class="type">number</span>;
-    skills: <span class="type">string</span>;
-    lang: <span class="type">string</span>;
-    devices: <span class="type">string</span>;
-    contact: <span class="type">string</span>;
-}
-
-<span class="keyword">const</span> userInfo: <span class="type">UserInfo</span> = {
-    name: <span class="string">"Ilya"</span>,
-    nickname: <span class="string">"uglyjpke/seventeen"</span>,
-    shi: <span class="string">"I found Jesus, Christian Dior"</span>,
-    age: 13,
-    skills: <span class="string">"Web Developer, UI/UX Designer"</span>,
-    lang: <span class="string">"TypeScript, Node.js, .NET"</span>,
-    devices: <span class="string">"Redmi 7 (onclite) 3/32"</span>,
-    contact: <span class="string">"telegram @fvckkinawesome"</span>
-};
-
-console.log(<span class="string">\`Name: \${</span>userInfo.name<span class="string">}\`</span>);
-console.log(<span class="string">\`Nickname: \${</span>userInfo.nickname<span class="string">}\`</span>);
-console.log(<span class="string">\`shitshitshit: \${</span>userInfo.shi<span class="string">}\`</span>);
-console.log(<span class="string">\`Age: \${</span>userInfo.age<span class="string">}\`</span>);
-console.log(<span class="string">\`whxami: \${</span>userInfo.skills<span class="string">}\`</span>);
-console.log(<span class="string">\`Main Languags: \${</span>userInfo.lang<span class="string">}\`</span>);
-console.log(<span class="string">\`Devices: \${</span>userInfo.devices<span class="string">}\`</span>);
-console.log(<span class="string">\`мне никто бля не пишет: \${</span>userInfo.contact<span class="string">}\`</span>);`;
-
-        const codeElement = document.getElementById('code');
-        const lineNumbersElement = document.getElementById('line-numbers');
-        const activeLineElement = document.getElementById('active-line');
-        const terminalElement = document.getElementById('terminal');
-        const terminalOutput = document.getElementById('terminal-output');
-        
-        function updateLineNumbers() {
-            const lines = codeText.split('\n').length;
-            lineNumbersElement.innerHTML = Array.from({ length: lines }, (_, i) => i + 1).join('<br>');
-        }
-        
-        updateLineNumbers();
-        
-        let i = 0;
-        let currentLine = 0;
-        
-        function updateActiveLine() {
-            const textUpToCursor = codeText.slice(0, i);
-            currentLine = textUpToCursor.split('\n').length - 1;
-            activeLineElement.style.top = `${currentLine * 1.5}em`;
-        }
-        
-        function typeCode() {
-            if (i < codeText.length) {
-                codeElement.innerHTML = codeText.slice(0, i + 1);
-                updateActiveLine();
-                i++;
-                setTimeout(typeCode, 20);
-            } else {
-                setTimeout(() => {
-                    terminalElement.classList.add('visible');
-                    terminalOutput.classList.add('visible');
-                }, 500);
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
             }
         }
 
+        /* Syntax highlighting colors */
+        .keyword { color: #fb4934; }
+        .string { color: #b8bb26; }
+        .type { color: #d3869b; }
+        .template { color: #83a598; }
+        .console { color: #fabd2f; }
+        .method { color: #8ec07c; }
+    </style>
+</head>
+<body>
+    <div class="tab-bar">
+        <div class="tab">index.ts</div>
+    </div>
+    
+    <div class="editor">
+        <div class="line-numbers" id="lineNumbers"></div>
+        <div class="code-area">
+            <div class="code-content">
+                <div class="current-line"></div>
+                <div class="code" id="code"></div>
+                <span class="cursor"></span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="terminal" id="terminal">
+        <div class="terminal-content">
+            <span class="terminal-path">../Projects/Bio $ node index.ts</span>
+            <div id="terminal-output"></div>
+        </div>
+    </div>
+
+    <script>
+        const userInfo = {
+            name: "Ilya",
+            nickname: "uglyjpke/seventeen",
+            shi: "I found Jesus, Christian Dior",
+            age: 13,
+            skills: "Web Developer, UI/UX Designer",
+            lang: "TypeScript, Node.js, .NET",
+            devices: "Redmi 7 (onclite) 3/32",
+            contact: "telegram @fvckkinawesome"
+        };
+       const codeText = `interface UserInfo {
+           name: string;
+           nickname: string;
+           shi: string;
+           age: number;
+           skills: string;
+           lang: string;
+           devices: string;
+    contact: string;
+}
+
+const userInfo: UserInfo = {
+    name: "${userInfo.name}",
+    nickname: "${userInfo.nickname}",
+    shi: "${userInfo.shi}",
+    age: ${userInfo.age},
+    skills: "${userInfo.skills}",
+    lang: "${userInfo.lang}",
+    devices: "${userInfo.devices}",
+    contact: "${userInfo.contact}"
+};
+
+console.log(\`Name: \${userInfo.name}\`);
+console.log(\`Nickname: \${userInfo.nickname}\`);
+console.log(\`shitshitshit: \${userInfo.shi}\`);
+console.log(\`Age: \${userInfo.age}\`);
+console.log(\`whxami: \${userInfo.skills}\`);
+console.log(\`Main Languags: \${userInfo.lang}\`);
+console.log(\`Devices: \${userInfo.devices}\`);
+console.log(\`мне никто бля не пишет: \${userInfo.contact}\`);`;
+
+        function formatCode(code) {
+            return code
+                .replace(/\b(interface|const)\b/g, '<span class="keyword">$1</span>')
+                .replace(/"([^"]+)"/g, '<span class="string">$1</span>')
+                .replace(/\b(string|number|UserInfo)\b/g, '<span class="type">$1</span>')
+                .replace(/(\${[^}]+})/g, '<span class="template">$1</span>')
+                .replace(/\b(console)\b/g, '<span class="console">$1</span>')
+                .replace(/\b(log)\b/g, '<span class="method">$1</span>');
+        }
+
+        let currentIndex = 0;
+        let currentLine = 0;
+        const codeElement = document.getElementById('code');
+        const lineNumbersElement = document.getElementById('lineNumbers');
+        const terminal = document.getElementById('terminal');
+        const terminalOutput = document.getElementById('terminal-output');
+        let isTypingComplete = false;
+
+        function updateLineNumbers(count) {
+            lineNumbersElement.innerHTML = Array.from(
+                { length: Math.max(count, 1) },
+                (_, i) => `<div class="line-number">${i + 1}</div>`
+            ).join('');
+        }
+
+        function typeCode() {
+            if (currentIndex < codeText.length) {
+                const textUpToCursor = codeText.slice(0, currentIndex + 1);
+                currentLine = textUpToCursor.split('\n').length - 1;
+                codeElement.innerHTML = formatCode(textUpToCursor);
+                updateLineNumbers(textUpToCursor.split('\n').length);
+                document.querySelector('.current-line').style.top = `${currentLine * 24}px`;
+                currentIndex++;
+                setTimeout(typeCode, 50);
+            } else if (!isTypingComplete) {
+                isTypingComplete = true;
+                setTimeout(showTerminal, 500);
+            }
+        }
+
+        function showTerminal() {
+            terminal.classList.add('visible');
+            displayTerminalLines();
+        }
+
+        function displayTerminalLines() {
+            Object.entries(userInfo).forEach(([key, value], index) => {
+                setTimeout(() => {
+                    const line = document.createElement('div');
+                    line.className = 'terminal-line';
+                    line.style.animationDelay = `${index * 0.1}s`;
+                    line.textContent = key === 'name' ? `>> Name: ${value}` :
+                        key === 'nickname' ? `>> Nickname: ${value}` :
+                        key === 'shi' ? `>> shitshitshit: ${value}` :
+                        key === 'age' ? `>> Age: ${value}` :
+                        key === 'skills' ? `>> whxami: ${value}` :
+                        key === 'lang' ? `>> Main Languags: ${value}` :
+                        key === 'devices' ? `>> Devices: ${value}` :
+                        `>> мне никто бля не пишет: ${value}`;
+                    terminalOutput.appendChild(line);
+                }, index * 100);
+            });
+        }
+
+        // Start the typing animation
         typeCode();
     </script>
 </body>
