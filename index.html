@@ -241,7 +241,7 @@ console.log(\`мне никто бля не пишет: \${userInfo.contact}\`);
                 updateLineNumbers(textUpToCursor.split('\n').length);
                 document.querySelector('.current-line').style.top = `${currentLine * 24}px`;
                 currentIndex++;
-                setTimeout(typeCode, 50);
+                setTimeout(typeCode, 15);
             } else if (!isTypingComplete) {
                 isTypingComplete = true;
                 setTimeout(showTerminal, 500);
